@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лісове Кафе</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest-deep: #0d1f0e;
+    --forest-dark: #132b14;
+    --forest-mid: #1e4620;
+    --forest-green: #2d6a2f;
+    --moss: #3d7a3f;
+    --leaf: #4e9a51;
+    --sage: #7ab87d;
+    --mist: #b8d8b9;
+    --cream: #f0ede4;
+    --gold: #c8a84b;
+    --gold-light: #e8c870;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    background:var(--forest-deep);
+    color:var(--cream);
+    font-family:'Cormorant Garamond',serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== LEAVES ===== */
+  .leaves-bg {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; z-index:0; overflow:hidden;
+  }
+  .leaf-particle {
+    position:absolute; border-radius:50% 0 50% 0;
+    opacity:0; animation:falling linear infinite;
+  }
+  @keyframes falling {
+    0%   { transform:translateY(-20px) rotate(0deg); opacity:0; }
+    10%  { opacity:.35; }
+    90%  { opacity:.15; }
+    100% { transform:translateY(110vh) rotate(720deg) translateX(50px); opacity:0; }
+  }
+  .leaf-particle:nth-child(1)  {left:5%;  width:8px;  height:11px;background:var(--leaf);         animation-duration:12s;animation-delay:0s;}
+  .leaf-particle:nth-child(2)  {left:15%; width:14px; height:18px;background:var(--moss);         animation-duration:15s;animation-delay:2s;}
+  .leaf-particle:nth-child(3)  {left:28%; width:10px; height:13px;background:var(--leaf);         animation-duration:10s;animation-delay:4s;}
+  .leaf-particle:nth-child(4)  {left:40%; width:7px;  height:10px;background:var(--sage);         animation-duration:18s;animation-delay:1s;}
+  .leaf-particle:nth-child(5)  {left:55%; width:12px; height:16px;background:var(--forest-green); animation-duration:13s;animation-delay:6s;}
+  .leaf-particle:nth-child(6)  {left:68%; width:9px;  height:12px;background:var(--leaf);         animation-duration:11s;animation-delay:3s;}
+  .leaf-particle:nth-child(7)  {left:78%; width:15px; height:20px;background:var(--moss);         animation-duration:16s;animation-delay:5s;}
+  .leaf-particle:nth-child(8)  {left:88%; width:8px;  height:11px;background:var(--sage);         animation-duration:14s;animation-delay:7s;}
+  .leaf-particle:nth-child(9)  {left:22%; width:11px; height:15px;background:var(--leaf);         animation-duration:17s;animation-delay:9s;}
+  .leaf-particle:nth-child(10) {left:60%; width:13px; height:17px;background:var(--forest-green); animation-duration:12s;animation-delay:11s;}
+
+  /* ===== NAV ===== */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:200;
+    padding:18px 60px;
+    display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(to bottom,rgba(13,31,14,.97) 0%,rgba(13,31,14,.5) 80%,transparent 100%);
+    animation:fadeDown 1s ease both;
+    transition:background .3s, box-shadow .3s;
+  }
+  nav.scrolled { background:rgba(13,31,14,.98); box-shadow:0 2px 24px rgba(0,0,0,.5); }
+  @keyframes fadeDown {
+    from{opacity:0;transform:translateY(-20px)}
+    to  {opacity:1;transform:translateY(0)}
+  }
+
+  .nav-logo {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.3rem,3vw,1.8rem);
+    color:var(--gold); letter-spacing:2px;
+    text-decoration:none; flex-shrink:0;
+  }
+  .nav-logo span { font-style:italic; color:var(--sage); }
+
+  .nav-links { list-style:none; display:flex; gap:36px; align-items:center; }
+  .nav-links a {
+    color:var(--mist); text-decoration:none;
+    font-size:.82rem; letter-spacing:2.5px; text-transform:uppercase;
+    transition:color .3s; white-space:nowrap;
+  }
+  .nav-links a:hover { color:var(--gold); }
+
+  /* Burger */
+  .burger {
+    display:none; flex-direction:column; gap:5px;
+    cursor:pointer; padding:6px; background:none; border:none; z-index:300;
+  }
+  .burger span {
+    display:block; width:26px; height:2px;
+    background:var(--gold); border-radius:2px;
+    transition:all .35s; transform-origin:center;
+  }
+  .burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .burger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+  .burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  /* Mobile overlay */
+  .mobile-menu {
+    position:fixed; inset:0;
+    background:rgba(13,31,14,.98); z-index:250;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:36px;
+    transform:translateX(100%);
+    transition:transform .45s cubic-bezier(.77,0,.18,1);
+  }
+  .mobile-menu.open { transform:translateX(0); }
+  .mobile-menu a {
+    color:var(--mist); text-decoration:none;
+    font-family:'Playfair Display',serif;
+    font-size:clamp(2rem,7vw,2.8rem);
+    letter-spacing:3px; transition:color .3s;
+  }
+  .mobile-menu a:hover { color:var(--gold); }
+  .mobile-menu-logo {
+    font-family:'Playfair Display',serif;
+    font-size:1.2rem; color:var(--gold);
+    letter-spacing:2px; margin-bottom:10px;
+  }
+  .mobile-menu-logo span { font-style:italic; color:var(--sage); }
+  .mobile-divider { width:40px; height:1px; background:var(--forest-green); }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp {
+    from{opacity:0;transform:translateY(30px)}
+    to  {opacity:1;transform:translateY(0)}
+  }
+  .reveal {
+    opacity:0; transform:translateY(40px);
+    transition:opacity .85s ease, transform .85s ease;
+  }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* ===== HERO ===== */
+  .hero {
+    position:relative; z-index:1;
+    min-height:100svh;
+    display:flex; flex-direction:column;
+    justify-content:center; align-items:center; text-align:center;
+    padding:clamp(100px,14vw,140px) clamp(20px,5vw,60px) 80px;
+  }
+  .hero::before {
+    content:''; position:absolute; inset:0; z-index:-1;
+    background:
+      radial-gradient(ellipse at 30% 60%,rgba(46,106,47,.15) 0%,transparent 60%),
+      radial-gradient(ellipse at 70% 30%,rgba(29,69,30,.2) 0%,transparent 50%);
+  }
+  .hero-tagline {
+    font-size:clamp(.68rem,2vw,.9rem); letter-spacing:6px;
+    text-transform:uppercase; color:var(--gold); margin-bottom:20px;
+    animation:fadeUp 1s .3s ease both;
+  }
+  .hero-title {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(3rem,12vw,8rem); line-height:1;
+    color:var(--cream); margin-bottom:20px;
+    animation:fadeUp 1s .5s ease both;
+  }
+  .hero-title em { font-style:italic; color:var(--sage); display:block; }
+  .hero-sub {
+    font-size:clamp(1rem,2.5vw,1.3rem); color:var(--mist);
+    font-weight:300; letter-spacing:1px; max-width:500px; line-height:1.8;
+    margin-bottom:46px; animation:fadeUp 1s .7s ease both; padding:0 10px;
+  }
+  .hero-cta {
+    display:inline-block;
+    padding:clamp(12px,2vw,16px) clamp(28px,5vw,50px);
+    border:1px solid var(--gold); color:var(--gold); text-decoration:none;
+    font-size:clamp(.74rem,1.5vw,.9rem); letter-spacing:3px; text-transform:uppercase;
+    transition:all .4s; animation:fadeUp 1s .9s ease both;
+    position:relative; overflow:hidden;
+  }
+  .hero-cta::before {
+    content:''; position:absolute; inset:0;
+    background:var(--gold); transform:translateX(-101%);
+    transition:transform .4s; z-index:-1;
+  }
+  .hero-cta:hover { color:var(--forest-deep); }
+  .hero-cta:hover::before { transform:translateX(0); }
+
+  .scroll-hint {
+    position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    color:var(--moss); font-size:.72rem; letter-spacing:3px; text-transform:uppercase;
+    animation:fadeUp 1s 1.2s ease both;
+  }
+  .scroll-line {
+    width:1px; height:50px;
+    background:linear-gradient(to bottom,var(--forest-green),transparent);
+    animation:growLine 2s 1.5s ease both, pulseLine 2s 3s infinite;
+  }
+  @keyframes growLine {from{height:0}to{height:50px}}
+  @keyframes pulseLine {0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ===== ATM STRIP ===== */
+  .atm-strip {
+    position:relative; z-index:1;
+    overflow:hidden; height:52px;
+    background:var(--forest-mid); display:flex; align-items:center;
+  }
+  .atm-track {
+    display:flex; gap:50px; white-space:nowrap;
+    animation:marquee 22s linear infinite;
+  }
+  .atm-item {
+    font-size:.78rem; letter-spacing:4px; text-transform:uppercase;
+    color:var(--sage); display:flex; align-items:center; gap:18px;
+  }
+  .atm-item::after { content:'✦'; color:var(--gold); font-size:.6rem; }
+  @keyframes marquee {
+    from{transform:translateX(0)} to{transform:translateX(-50%)}
+  }
+
+  /* ===== SECTION BASE ===== */
+  section {
+    position:relative; z-index:1;
+    padding:clamp(60px,10vw,110px) clamp(20px,5vw,60px);
+  }
+  .section-label {
+    font-size:.74rem; letter-spacing:5px; text-transform:uppercase;
+    color:var(--gold); margin-bottom:14px;
+  }
+  .section-title {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(2rem,5vw,4rem); line-height:1.1;
+    color:var(--cream); margin-bottom:28px;
+  }
+  .section-title em { font-style:italic; color:var(--sage); }
+
+  /* ===== ABOUT ===== */
+  .about-wrap {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:clamp(30px,6vw,80px); align-items:center;
+    max-width:1200px; margin:0 auto;
+  }
+  .about-text p {
+    font-size:clamp(1rem,1.5vw,1.15rem); line-height:1.9;
+    color:var(--mist); font-weight:300; margin-bottom:18px;
+  }
+  .about-stats {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:clamp(12px,2vw,28px); margin-top:36px;
+  }
+  .stat {
+    padding:clamp(14px,2vw,24px);
+    border:1px solid var(--forest-mid);
+    background:rgba(30,70,32,.15);
+    transition:border-color .3s, background .3s;
+  }
+  .stat:hover { border-color:var(--gold); background:rgba(30,70,32,.3); }
+  .stat-num {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.8rem,3vw,2.5rem); color:var(--gold); line-height:1;
+  }
+  .stat-label {
+    font-size:.76rem; letter-spacing:2px; text-transform:uppercase;
+    color:var(--sage); margin-top:5px;
+  }
+
+  .about-image-wrap { position:relative; }
+  .about-image-box {
+    width:100%; aspect-ratio:3/4;
+    background:linear-gradient(145deg,var(--forest-mid),var(--forest-dark));
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:12px; border:1px solid var(--forest-mid);
+  }
+  .big-icon { font-size:clamp(3rem,6vw,5rem); opacity:.3; }
+  .img-label {
+    font-size:.76rem; letter-spacing:3px; text-transform:uppercase;
+    color:var(--sage); opacity:.5;
+  }
+  .about-image-frame {
+    position:absolute; inset:12px;
+    border:1px solid rgba(200,168,75,.22); pointer-events:none;
+  }
+  .about-badge {
+    position:absolute; bottom:-20px; right:-20px;
+    width:clamp(80px,10vw,120px); height:clamp(80px,10vw,120px);
+    background:var(--forest-mid); border:1px solid var(--forest-green);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:4px;
+  }
+  .about-badge .star { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--gold); }
+  .about-badge .badge-txt { font-size:.63rem; letter-spacing:2px; text-transform:uppercase; color:var(--sage); }
+
+  /* ===== GALLERY ===== */
+  .photo-section {
+    background:var(--forest-dark);
+    padding:clamp(60px,10vw,110px) clamp(16px,4vw,60px);
+  }
+  .photo-section-header { text-align:center; margin-bottom:50px; }
+
+  .photo-grid {
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr;
+    grid-template-rows:260px 260px;
+    gap:14px; max-width:1200px; margin:0 auto;
+  }
+  .photo-card {
+    position:relative; overflow:hidden;
+    background:var(--forest-mid); cursor:pointer;
+  }
+  .photo-card:first-child { grid-row:span 2; }
+
+  .photo-placeholder {
+    width:100%; height:100%;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:10px;
+    background:linear-gradient(135deg,var(--forest-mid),var(--forest-dark));
+    transition:transform .6s cubic-bezier(.25,.46,.45,.94);
+    overflow:hidden;
+  }
+  .photo-placeholder img {
+    transition:transform .6s cubic-bezier(.25,.46,.45,.94);
+  }
+  .photo-card:hover .photo-placeholder { transform:scale(1.05); }
+  .photo-card:hover .photo-placeholder img { transform:scale(1.05); }
+  .photo-icon { font-size:clamp(2rem,4vw,3rem); opacity:.4; }
+  .photo-label {
+    font-size:.74rem; letter-spacing:3px; text-transform:uppercase;
+    color:var(--sage); opacity:.6;
+  }
+  .photo-overlay {
+    position:absolute; inset:0;
+    background:linear-gradient(to top,rgba(13,31,14,.8),transparent 50%);
+    opacity:0; transition:opacity .4s;
+    display:flex; align-items:flex-end; padding:20px;
+  }
+  .photo-card:hover .photo-overlay { opacity:1; }
+  .photo-overlay-text {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1rem,1.5vw,1.2rem); color:var(--cream); font-style:italic;
+  }
+  .photo-card::before {
+    content:''; position:absolute; inset:7px;
+    border:1px solid rgba(200,168,75,.2); z-index:2;
+    pointer-events:none; transition:border-color .3s;
+  }
+  .photo-card:hover::before { border-color:rgba(200,168,75,.5); }
+
+  /* ===== MENU ===== */
+  .menu-section { max-width:1200px; margin:0 auto; }
+  .menu-grid {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:clamp(14px,2vw,30px); margin-top:50px;
+  }
+  .menu-category {
+    padding:clamp(20px,3vw,40px);
+    border:1px solid var(--forest-mid);
+    background:linear-gradient(145deg,rgba(30,70,32,.1),rgba(13,31,14,.3));
+    transition:all .4s; position:relative; overflow:hidden;
+  }
+  .menu-category::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    background:linear-gradient(to right,var(--forest-green),var(--gold),var(--forest-green));
+    transform:scaleX(0); transition:transform .4s;
+  }
+  .menu-category:hover { border-color:var(--moss); }
+  .menu-category:hover::after { transform:scaleX(1); }
+  .menu-cat-icon { font-size:clamp(2rem,3vw,2.5rem); margin-bottom:14px; display:block; }
+  .menu-cat-title {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.2rem,2vw,1.5rem); color:var(--gold); margin-bottom:18px;
+  }
+  .menu-item {
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:9px 0; border-bottom:1px dashed rgba(61,122,63,.3); gap:8px;
+  }
+  .menu-item:last-child { border-bottom:none; }
+  .menu-item-name { font-size:clamp(.88rem,1.2vw,1rem); color:var(--mist); flex:1; }
+  .menu-item-price { font-size:.95rem; color:var(--gold); font-weight:500; white-space:nowrap; }
+
+  /* ===== FOOTER ===== */
+  footer { position:relative; z-index:1; background:var(--forest-deep); border-top:1px solid var(--forest-mid); }
+  .footer-top {
+    padding:clamp(46px,8vw,80px) clamp(20px,5vw,60px);
+    display:grid; grid-template-columns:1.2fr 1fr 1fr;
+    gap:clamp(28px,5vw,60px); max-width:1200px; margin:0 auto;
+  }
+  .footer-brand .nav-logo { display:block; margin-bottom:14px; }
+  .footer-brand p { color:var(--moss); font-size:1rem; line-height:1.8; font-weight:300; }
+  .footer-col h4 {
+    font-size:.72rem; letter-spacing:4px; text-transform:uppercase;
+    color:var(--gold); margin-bottom:18px;
+  }
+  .footer-col p, .footer-col a {
+    display:block; color:var(--mist); text-decoration:none;
+    font-size:1rem; line-height:2; font-weight:300; transition:color .3s;
+  }
+  .footer-col a:hover { color:var(--gold); }
+
+  /* ===== PHONE BAR ===== */
+  .phone-bar {
+    background:linear-gradient(135deg,var(--forest-mid),var(--forest-green));
+    padding:clamp(22px,3vw,30px) clamp(20px,5vw,60px);
+    display:flex; align-items:center; justify-content:center;
+    gap:clamp(14px,4vw,40px); flex-wrap:wrap;
+    border-top:1px solid rgba(200,168,75,.3);
+  }
+  .phone-label {
+    font-size:.76rem; letter-spacing:4px; text-transform:uppercase;
+    color:var(--mist); opacity:.75;
+  }
+  .phone-number {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.4rem,4vw,2.1rem); color:var(--gold);
+    letter-spacing:clamp(1px,.5vw,4px); text-decoration:none;
+    display:flex; align-items:center; gap:12px; transition:color .3s;
+  }
+  .phone-number:hover { color:var(--gold-light); }
+  .phone-icon {
+    width:clamp(40px,5vw,50px); height:clamp(40px,5vw,50px);
+    border:1px solid var(--gold); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(.9rem,1.5vw,1.1rem);
+    animation:ring 4s ease infinite; flex-shrink:0;
+  }
+  @keyframes ring {
+    0%,100%{transform:rotate(0)}
+    5%  {transform:rotate(15deg)}
+    10% {transform:rotate(-10deg)}
+    15% {transform:rotate(8deg)}
+    20% {transform:rotate(0)}
+  }
+  .phone-note { font-size:.84rem; color:var(--sage); letter-spacing:1px; }
+  .copyright {
+    text-align:center; padding:18px;
+    font-size:.76rem; color:var(--forest-green); letter-spacing:2px;
+    border-top:1px solid rgba(29,69,30,.5);
+  }
+
+  /* ================================================
+     RESPONSIVE
+  ================================================ */
+
+  /* Tablet landscape 768–1024 */
+  @media (max-width:1024px) {
+    nav { padding:16px 30px; }
+
+    .about-wrap { grid-template-columns:1fr; gap:40px; }
+    .about-image-wrap { max-width:460px; margin:0 auto; }
+
+    .photo-grid {
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:220px 220px 220px;
+    }
+    .photo-card:first-child { grid-row:span 2; }
+
+    .menu-grid { grid-template-columns:1fr 1fr; }
+
+    .footer-top { grid-template-columns:1fr 1fr; }
+    .footer-brand { grid-column:span 2; }
+  }
+
+  /* Tablet portrait 600–768 */
+  @media (max-width:768px) {
+    nav { padding:14px 20px; }
+    .nav-links { display:none; }
+    .burger { display:flex; }
+
+    .hero { padding:90px 20px 70px; }
+    .scroll-hint { display:none; }
+
+    .photo-grid {
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:170px 170px 170px;
+    }
+
+    .menu-grid { grid-template-columns:1fr; }
+
+    .footer-top { grid-template-columns:1fr; }
+    .footer-brand { grid-column:auto; }
+
+    .about-badge { position:static; margin-top:20px; width:90px; height:90px; }
+
+    .phone-bar { flex-direction:column; text-align:center; gap:12px; }
+    .phone-label { display:none; }
+  }
+
+  /* Mobile 0–480 */
+  @media (max-width:480px) {
+    nav { padding:12px 16px; }
+
+    .hero-tagline { letter-spacing:3px; font-size:.66rem; }
+    .hero-cta { padding:13px 26px; letter-spacing:2px; }
+
+    .atm-strip { height:44px; }
+    .atm-item { font-size:.68rem; letter-spacing:2px; gap:12px; }
+
+    .photo-grid {
+      grid-template-columns:1fr;
+      grid-template-rows:auto;
+    }
+    .photo-card:first-child { grid-row:auto; }
+    .photo-card { height:190px; }
+
+    .about-stats { grid-template-columns:1fr 1fr; }
+
+    .menu-category { padding:18px 16px; }
+
+    .phone-number { font-size:1.3rem; letter-spacing:1px; }
+
+    .footer-top { padding:36px 16px; gap:24px; }
+
+    section { padding:50px 16px; }
+    .photo-section { padding:50px 16px; }
+  }
+
+  /* Large desktop 1400+ */
+  @media (min-width:1400px) {
+    nav { padding:20px 80px; }
+    section { padding:120px 80px; }
+    .photo-section { padding:120px 80px; }
+    .photo-grid { grid-template-rows:300px 300px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Leaves -->
+<div class="leaves-bg">
+  <div class="leaf-particle"></div><div class="leaf-particle"></div>
+  <div class="leaf-particle"></div><div class="leaf-particle"></div>
+  <div class="leaf-particle"></div><div class="leaf-particle"></div>
+  <div class="leaf-particle"></div><div class="leaf-particle"></div>
+  <div class="leaf-particle"></div><div class="leaf-particle"></div>
+</div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">Лісове <span>Кафе</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">Про нас</a></li>
+    <li><a href="#gallery">Галерея</a></li>
+    <li><a href="#menu">Меню</a></li>
+    <li><a href="#contact">Контакти</a></li>
+  </ul>
+  <button class="burger" id="burger" aria-label="Меню">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-logo">Лісове <span>Кафе</span></div>
+  <div class="mobile-divider"></div>
+  <a href="#about"   onclick="closeMenu()">Про нас</a>
+  <a href="#gallery" onclick="closeMenu()">Галерея</a>
+  <a href="#menu"    onclick="closeMenu()">Меню</a>
+  <a href="#contact" onclick="closeMenu()">Контакти</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-tagline">✦ Серед лісу, поза часом ✦</p>
+  <h1 class="hero-title">Лісове<em>Кафе</em></h1>
+  <p class="hero-sub">Де природа стає столом, а тиша — найкращою музикою</p>
+  <a href="#menu" class="hero-cta">Переглянути меню</a>
+  <div class="scroll-hint">
+    <span>Далі</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ATM STRIP -->
+<div class="atm-strip">
+  <div class="atm-track">
+    <span class="atm-item">Свіже повітря</span>
+    <span class="atm-item">Домашня кухня</span>
+    <span class="atm-item">Живий вогонь</span>
+    <span class="atm-item">Тиша лісу</span>
+    <span class="atm-item">Сезонне меню</span>
+    <span class="atm-item">Місцеві продукти</span>
+    <span class="atm-item">Свіже повітря</span>
+    <span class="atm-item">Домашня кухня</span>
+    <span class="atm-item">Живий вогонь</span>
+    <span class="atm-item">Тиша лісу</span>
+    <span class="atm-item">Сезонне меню</span>
+    <span class="atm-item">Місцеві продукти</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-wrap reveal">
+    <div class="about-text">
+      <p class="section-label">Наша історія</p>
+      <h2 class="section-title">Місце, де час<br><em>зупиняється</em></h2>
+      <p>Лісове кафе — це не просто заклад. Це простір, де ліс входить крізь вікна, де запах хвої змішується з ароматом свіжої кави, а кожна страва приготована з продуктів, вирощених поруч.</p>
+      <p>Ми відкрились, щоб дати людям місце для справжнього відпочинку — без суєти, без шуму, лише природа і смачна їжа.</p>
+      <div class="about-stats">
+        <div class="stat"><div class="stat-num">7+</div><div class="stat-label">Років у лісі</div></div>
+        <div class="stat"><div class="stat-num">40+</div><div class="stat-label">Страв у меню</div></div>
+        <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Свіжі продукти</div></div>
+        <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Тиша і спокій</div></div>
+      </div>
+    </div>
+    <div class="about-image-wrap">
+      <div class="about-image-box" style="padding:0;overflow:hidden;">
+        <img src="interior2.jpg.jpg" alt="Інтер'єр лісового кафе" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s ease;">
+      </div>
+      <div class="about-image-frame"></div>
+      <div class="about-badge">
+        <span class="star">★</span>
+        <span class="badge-txt">Топ кафе</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery" class="photo-section">
+  <div class="photo-section-header reveal">
+    <p class="section-label">Галерея</p>
+    <h2 class="section-title">Атмосфера <em>живого лісу</em></h2>
+  </div>
+  <div class="photo-grid reveal">
+    <div class="photo-card">
+      <div class="photo-placeholder" style="padding:0;">
+        <img src="main.jpg.jpg" alt="Лісове кафе — головне фото" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94);">
+      </div>
+      <div class="photo-overlay"><span class="photo-overlay-text">Серце нашого кафе</span></div>
+    </div>
+    <div class="photo-card">
+      <div class="photo-placeholder" style="padding:0;position:relative;">
+        <img src="coffee.jpg.jpg" alt="Авторська кава лісового кафе" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94);">
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:10px 14px;background:linear-gradient(to top,rgba(13,31,14,.88),transparent);z-index:3;pointer-events:none;">
+          <span style="font-family:'Playfair Display',serif;font-size:clamp(.82rem,1.4vw,1rem);color:var(--cream);font-style:italic;letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,.6);">Лісова кава</span>
+        </div>
+      </div>
+      <div class="photo-overlay"><span class="photo-overlay-text">Авторська кава</span></div>
+    </div>
+    <div class="photo-card">
+      <div class="photo-placeholder" style="padding:0;">
+        <img src="food.jpg.jpg" alt="Страви лісового кафе" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94);" id="foodImg">
+      </div>
+      <div class="photo-overlay"><span class="photo-overlay-text">Смаки природи</span></div>
+    </div>
+    <div class="photo-card">
+      <div class="photo-placeholder" style="padding:0;">
+        <img src="interior.jpg.jpg" alt="Інтер'єр лісового кафе" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94);">
+      </div>
+      <div class="photo-overlay"><span class="photo-overlay-text">Дерево та тепло</span></div>
+    </div>
+    <div class="photo-card">
+      <div class="photo-placeholder" style="padding:0;">
+        <img src="terrace.jpg.jpg" alt="Літня тераса лісового кафе" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94);">
+      </div>
+      <div class="photo-overlay"><span class="photo-overlay-text">Літня веранда</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- MENU -->
+<section id="menu">
+  <div class="menu-section reveal">
+    <div style="text-align:center;margin-bottom:10px;">
+      <p class="section-label">Наша пропозиція</p>
+      <h2 class="section-title">Смаки <em>лісу</em></h2>
+    </div>
+    <div class="menu-grid">
+      <div class="menu-category">
+        <span class="menu-cat-icon">🥣</span>
+        <div class="menu-cat-title">Сніданки</div>
+        <div class="menu-item"><span class="menu-item-name">Вівсяна каша з ягодами</span><span class="menu-item-price">89 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Яєчня на дровах</span><span class="menu-item-price">110 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Млинці з лісовим медом</span><span class="menu-item-price">120 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Тости з авокадо</span><span class="menu-item-price">145 ₴</span></div>
+      </div>
+      <div class="menu-category">
+        <span class="menu-cat-icon">🍲</span>
+        <div class="menu-cat-title">Гарячі страви</div>
+        <div class="menu-item"><span class="menu-item-name">Борщ домашній</span><span class="menu-item-price">160 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Шашлик лісовий</span><span class="menu-item-price">320 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Жульєн з грибами</span><span class="menu-item-price">195 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Запечена форель</span><span class="menu-item-price">380 ₴</span></div>
+      </div>
+      <div class="menu-category">
+        <span class="menu-cat-icon">☕</span>
+        <div class="menu-cat-title">Напої та десерти</div>
+        <div class="menu-item"><span class="menu-item-name">Кава лісова</span><span class="menu-item-price">75 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Чай з травами</span><span class="menu-item-price">60 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Медовик домашній</span><span class="menu-item-price">110 ₴</span></div>
+        <div class="menu-item"><span class="menu-item-name">Варення з чорниці</span><span class="menu-item-price">45 ₴</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contact">
+  <div class="footer-top reveal">
+    <div class="footer-brand">
+      <span class="nav-logo">Лісове <span>Кафе</span></span>
+      <p>Місце де ліс запрошує вас до столу. Відкриті щодня для тих, хто шукає справжнього відпочинку.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Розклад</h4>
+      <p>Пн–Пт: 09:00 – 22:00</p>
+      <p>Сб–Нд: 08:00 – 23:00</p>
+      <p style="margin-top:14px;color:var(--gold);">Резервація столиків ✦</p>
+    </div>
+    <div class="footer-col">
+      <h4>Де знайти</h4>
+      <p>Лісова вулиця, 1</p>
+      <p>Поруч з парком</p>
+      <a href="#">Як доїхати →</a>
+      <a href="#">Instagram →</a>
+    </div>
+  </div>
+
+  <!-- PHONE BAR -->
+  <div class="phone-bar">
+    <span class="phone-label">Резервація та замовлення</span>
+    <a href="tel:+380000000000" class="phone-number">
+      <div class="phone-icon">📞</div>
+      +380 --- --- ---
+    </a>
+    <span class="phone-note">Дзвоніть з 09:00 до 22:00</span>
+  </div>
+  <div class="copyright">© 2025 Лісове Кафе &nbsp;✦&nbsp; Де природа стає домом</div>
+</footer>
+
+<script>
+  // Burger
+  const burger = document.getElementById('burger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  burger.addEventListener('click', () => {
+    burger.classList.toggle('open');
+    mobileMenu.classList.toggle('open');
+    document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+  });
+  function closeMenu() {
+    burger.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Nav scroll shadow
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 }).observe && (() => {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.08 });
+    reveals.forEach(el => obs.observe(el));
+  })();
+
+  // Stagger cards
+  const cards = document.querySelectorAll('.photo-grid .photo-card, .menu-grid .menu-category');
+  cards.forEach((el, i) => {
+    el.style.cssText += `opacity:0;transform:translateY(30px);transition:opacity .7s ${i*0.1}s ease, transform .7s ${i*0.1}s ease;`;
+  });
+  const cardObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+  cards.forEach(el => cardObs.observe(el));
+
+  // Fix reveal observer
+  const revObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+  reveals.forEach(el => revObs.observe(el));
+</script>
+</body>
+</html>
